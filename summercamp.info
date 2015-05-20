@@ -1,0 +1,4 @@
+name = Summer Camp
+description = Custom module for the Drupal Summer Camp PH 2015.
+core = 7.x
+configure = admin/config/custom/chart

@@ -1,0 +1,230 @@
+<?php
+
+/**
+ * Implements hook_block_info().
+ */
+function summercamp_block_info() {
+  $blocks = array();
+
+  $blocks['summercamp_featured_block'] = array(
+    'info' => 'Featured Contents',
+    'status' => 1,
+    'region' => 'sidebar_second',
+  );
+
+  $blocks['summercamp_panoramio_function'] = array(
+    'info' => 'Panoramio Theme Function Block',
+    'status' => 1,
+    'region' => 'sidebar_second',
+  );
+
+  return $blocks;
+}
+
+
+/**
+ * Implements hook_block_view().
+ */
+function summercamp_block_view($block_name = '') {
+  $block = array();
+
+  switch ($block_name) {
+    case 'summercamp_featured_block':
+      $block['subject'] = 'Featured Contents';
+      //$block['content'] = variable_get('summercamp_featured_block_content', 'Hello Humans!');
+
+      $current_content = variable_get('summercamp_featured_block_content', 'Hello Humans!');
+      $canvas_content = '<canvas id="chart-canvas" width="168" height="168">';
+
+      $markup = $current_content . $canvas_content;
+
+      $block['content']['#markup']  = $markup;
+
+      $chart_type = array(
+        'type' => variable_get('summercamp_chart_type', 'Pie'),
+      );
+
+      $block['content']['#attached']['js'][] = array(
+        'data' => array('chart' => $chart_type),
+        'type' => 'setting',
+      );
+
+      $block['content']['#attached']['js'][] = array(
+        'data' => 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.js',
+        'type' => 'external',
+      );
+
+      $block['content']['#attached']['js'][] = array(
+        'data' => drupal_get_path('module', 'summercamp') . '/js/summercamp_chart_driver.js',
+        'type' => 'file',
+      );
+
+      break;
+
+    case 'summercamp_panoramio_function':
+      $block['subject'] = 'Panoramio Theme Function Block';
+
+      // Pull the Top 1 most popular photo in the vicinity of the Philippines.
+      // API Details: http://www.panoramio.com/api/data/api.html
+      $target_image = 'http://www.panoramio.com/map/get_panoramas.php?set=full&from=0&to=1&minx=115&miny=0&maxx=130&maxy=20&size=thumbnail';
+
+      $request = drupal_http_request($target_image);
+
+      $data = drupal_json_decode($request->data);
+
+      $photo = $data['photos'][0];
+      $title = $photo['photo_title'];
+      $photo_file_url = $photo['photo_file_url'];
+
+      $photo_attributes = array(
+        'properties' => array(
+          'title' => $title,
+          'src' => $photo_file_url,
+        ),
+      );
+
+      $block['content']['#markup'] = theme('summercamp_panoramio_theme_function', $photo_attributes);
+
+      break;
+  }
+
+  return $block;
+}
+
+
+/**
+ * Implements hook_block_configure().
+ */
+function summercamp_block_configure($block_name = '') {
+  $form = array();
+
+  if ($block_name == 'summercamp_featured_block') {
+    $form['summercamp_featured_block_content'] = array(
+      '#type' => 'textarea',
+      '#title' => 'Block Contents',
+      '#default_value' => variable_get('summercamp_featured_block_content', 'Hello Humans!'),
+    );
+  }
+
+  return $form;
+}
+
+
+/**
+ * Implements hook_block_save().
+ */
+function summercamp_block_save($block_name = '', $form_state = array()) {
+  if ($block_name == 'summercamp_featured_block') {
+    variable_set('summercamp_featured_block_content', $form_state['summercamp_featured_block_content']);
+  }
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function summercamp_menu() {
+  $items = array();
+
+  $items['articles/json'] = array(
+    'page callback' => '_get_articles',
+    'delivery callback' => 'drupal_json_output',
+    'access arguments' => array('access content'),
+  );
+
+  $items['admin/config/custom'] = array(
+    'title' => 'Custom',
+    'access arguments' => array('access content'),
+  );
+
+  $items['admin/config/custom/chart'] = array(
+    'title' => 'Chart Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_chart_admin_settings'),
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+
+function _chart_admin_settings($form, &$form_state) {
+  $form = array();
+
+  $form['summercamp_chart_type'] = array(
+    '#type' => 'select',
+    '#title' => 'Choose the Chart Type',
+    '#default_value' => variable_get('summercamp_chart_type', 'Pie'),
+    '#options' => array(
+      'Pie' => 'Pie',
+      'Doughnut' => 'Doughnut',
+    ),
+  );
+
+  $form['summercamp_chart_label'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Include the Labels',
+    '#default_value' => variable_get('summercamp_chart_label', 1),
+  );
+
+  $form['summercamp_chart_highlight_color'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Desired Highlight Color',
+    '#default_value' => variable_get('summercamp_chart_highlight_color', 'lightblue'),
+  );
+
+  $form = system_settings_form($form);
+
+  return $form;
+}
+
+
+function _get_articles() {
+  $query = new EntityFieldQuery();
+
+  $query
+    ->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'article');
+
+  $result = $query->execute();
+
+  if (isset($result['node'])) {
+    $nids = array_keys($result['node']);
+    $articles = entity_load('node', $nids);
+  }
+
+  return array('data' => $articles);
+}
+
+
+/**
+ * Implements hook_js_alter().
+ */
+function summercamp_js_alter(&$js_files) {
+  // dpm($js_files);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function summercamp_theme() {
+  return array(
+    'summercamp_panoramio_theme_function' => array(
+      'image_properties' => array('properties' => NULL),
+    ),
+  );
+}
+
+
+/**
+ * Implements "theme_hook()".
+ */
+function theme_summercamp_panoramio_theme_function($vars) {
+  $place_name = $vars['properties']['title'];
+  $img_src = $vars['properties']['src'];
+
+  $place_name_markup = '<p>' . $place_name . '</p>';
+  $img_markup = '<img src="' . $img_src . '" />';
+
+  return $place_name_markup . $img_markup;
+}
