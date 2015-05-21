@@ -18,6 +18,12 @@ function summercamp_block_info() {
     'region' => 'sidebar_second',
   );
 
+  $blocks['summercamp_panoramio_template'] = array(
+    'info' => 'Panoramio Template File Block',
+    'status' => 1,
+    'region' => 'sidebar_second',
+  );
+
   return $blocks;
 }
 
@@ -31,13 +37,13 @@ function summercamp_block_view($block_name = '') {
   switch ($block_name) {
     case 'summercamp_featured_block':
       $block['subject'] = 'Featured Contents';
-      //$block['content'] = variable_get('summercamp_featured_block_content', 'Hello Humans!');
 
-      $current_content = variable_get('summercamp_featured_block_content', 'Hello Humans!');
+      $current_content = variable_get('summercamp_featured_block_content', 'Hello World!');
       $canvas_content = '<canvas id="chart-canvas" width="168" height="168">';
 
       $markup = $current_content . $canvas_content;
 
+      // '#markup' indicate the contents of the block.
       $block['content']['#markup']  = $markup;
 
       $chart_type = array(
@@ -62,28 +68,26 @@ function summercamp_block_view($block_name = '') {
       break;
 
     case 'summercamp_panoramio_function':
-      $block['subject'] = 'Panoramio Theme Function Block';
+      $block['subject'] = 'Back-End JSON with Theme Function';
 
-      // Pull the Top 1 most popular photo in the vicinity of the Philippines.
-      // API Details: http://www.panoramio.com/api/data/api.html
-      $target_image = 'http://www.panoramio.com/map/get_panoramas.php?set=full&from=0&to=1&minx=115&miny=0&maxx=130&maxy=20&size=thumbnail';
-
-      $request = drupal_http_request($target_image);
-
-      $data = drupal_json_decode($request->data);
-
-      $photo = $data['photos'][0];
-      $title = $photo['photo_title'];
-      $photo_file_url = $photo['photo_file_url'];
-
-      $photo_attributes = array(
-        'properties' => array(
-          'title' => $title,
-          'src' => $photo_file_url,
-        ),
-      );
+      // Fetch JSON data from Panoramio API.
+      $photo_attributes = _summercamp_fetch_panoramio_data();
 
       $block['content']['#markup'] = theme('summercamp_panoramio_theme_function', $photo_attributes);
+
+      break;
+
+    case 'summercamp_panoramio_template':
+      $block['subject'] = 'Back-End JSON with Template File';
+
+      // Fetch JSON data from Panoramio API.
+      $photo_attributes = _summercamp_fetch_panoramio_data();
+
+      $block['content'][] = array (
+        '#theme' => 'summercamp_panoramio_template_file',
+        '#title' => $photo_attributes['title'],
+        '#src' => $photo_attributes['src'],
+      );
 
       break;
   }
@@ -204,27 +208,76 @@ function summercamp_js_alter(&$js_files) {
   // dpm($js_files);
 }
 
+
 /**
  * Implements hook_theme().
  */
 function summercamp_theme() {
+  // Registers the theming mechanisms and the extra info/variables they need.
   return array(
+    // Build the block using the markup in the returned string of a function.
     'summercamp_panoramio_theme_function' => array(
-      'image_properties' => array('properties' => NULL),
+      'variables' => array(
+        'title' => NULL,
+        'src' => NULL,
+      ),
+    ),
+
+    // Build the block using the markup in the contents of a template file.
+    // Theming using template file need extra information which is
+    // the file name of the template file to be searched for
+    // in the current/module directory.
+    // In the example below, the template file is:
+    // summercamp_panoramio.tpl.php
+    'summercamp_panoramio_template_file' => array(
+      'template' => 'summercamp_panoramio',
+      'variables' => array(
+        'title' => NULL,
+        'src' => NULL,
+      ),
     ),
   );
 }
 
 
 /**
- * Implements "theme_hook()".
+ * Theme function.
+ *
+ * $photo_attributes contains the passed info when invoking the theme function:
+ *  theme('summercamp_panoramio_theme_function', $photo_attributes)
  */
-function theme_summercamp_panoramio_theme_function($vars) {
-  $place_name = $vars['properties']['title'];
-  $img_src = $vars['properties']['src'];
+function theme_summercamp_panoramio_theme_function($photo_attributes) {
+  $title = $photo_attributes['title'];
+  $img_src = $photo_attributes['src'];
 
-  $place_name_markup = '<p>' . $place_name . '</p>';
+  $title_markup = '<p>' .  $title . '</p>';
   $img_markup = '<img src="' . $img_src . '" />';
 
-  return $place_name_markup . $img_markup;
+  // Return the combined markups of title and the photo itself.
+  return $title_markup . $img_markup;
+}
+
+
+/**
+ * Helper function for fetching data from Panoramio API.
+ */
+function _summercamp_fetch_panoramio_data() {
+  // Pull the Top 1 most popular photo in the vicinity of the Philippines.
+  // API Details: http://www.panoramio.com/api/data/api.html
+  $target_image = 'http://www.panoramio.com/map/get_panoramas.php?set=full&from=0&to=1&minx=115&miny=0&maxx=130&maxy=20&size=thumbnail';
+
+  $request = drupal_http_request($target_image);
+
+  $data = drupal_json_decode($request->data);
+
+  $photo = $data['photos'][0];
+  $title = $photo['photo_title'];
+  $file_url = $photo['photo_file_url'];
+
+  $photo_attributes = array(
+    'title' => $title,
+    'src' => $file_url,
+  );
+
+  return $photo_attributes;
 }
