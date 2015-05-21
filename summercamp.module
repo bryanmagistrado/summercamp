@@ -38,28 +38,40 @@ function summercamp_block_view($block_name = '') {
     case 'summercamp_featured_block':
       $block['subject'] = 'Featured Contents';
 
+      // Build the main markups for the block: Paragraph and Canvas tags.
+      // Canvas is an HTML5 tag/element.
       $current_content = variable_get('summercamp_featured_block_content', 'Hello World!');
       $canvas_content = '<canvas id="chart-canvas" width="168" height="168">';
 
+      // Combine their markups.
       $markup = $current_content . $canvas_content;
 
       // '#markup' indicate the contents of the block.
       $block['content']['#markup']  = $markup;
 
+      // '#attached' could inject JS scripts into render array in four contexts:
+      // As inline scripts, as Drupal.settings object, as a local/internal file,
+      // or as sourced from external sites.
+      //
+      // Prepare some info to be passed to Drupal.settings.
       $chart_type = array(
         'type' => variable_get('summercamp_chart_type', 'Pie'),
       );
 
+      // Pass the chart type info as Drupal.settings.chart.type.
       $block['content']['#attached']['js'][] = array(
         'data' => array('chart' => $chart_type),
         'type' => 'setting',
       );
 
+      // Fetch an external JS script (Chart JS).
       $block['content']['#attached']['js'][] = array(
         'data' => 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.js',
         'type' => 'external',
       );
 
+      // Fetch an internal/local JS script used for rendering the chart
+      // in the rendered block markup (which contains the Canvas element).
       $block['content']['#attached']['js'][] = array(
         'data' => drupal_get_path('module', 'summercamp') . '/js/summercamp_chart_driver.js',
         'type' => 'file',
@@ -73,6 +85,7 @@ function summercamp_block_view($block_name = '') {
       // Fetch JSON data from Panoramio API.
       $photo_attributes = _summercamp_fetch_panoramio_data();
 
+      // Build the block markup using a theme function.
       $block['content']['#markup'] = theme('summercamp_panoramio_theme_function', $photo_attributes);
 
       break;
@@ -83,6 +96,9 @@ function summercamp_block_view($block_name = '') {
       // Fetch JSON data from Panoramio API.
       $photo_attributes = _summercamp_fetch_panoramio_data();
 
+      // Build the block markup using a template file.
+      // Note that we need to append the render array as a new array element
+      // to simulate a new array key because a key is needed for render array.
       $block['content'][] = array (
         '#theme' => 'summercamp_panoramio_template_file',
         '#title' => $photo_attributes['title'],
@@ -130,21 +146,31 @@ function summercamp_block_save($block_name = '', $form_state = array()) {
 function summercamp_menu() {
   $items = array();
 
+  // Define a new menu: http://www.example.com/articles/json.
+  // Set the function to be executed ('_summercamp_get_articles'),
+  // the access permission for the URL ('access content'),
+  // and convert the returned array/data of the function callback to JSON
+  // ('drupal_json_output').
   $items['articles/json'] = array(
-    'page callback' => '_get_articles',
+    'page callback' => '_summercamp_get_articles',
     'delivery callback' => 'drupal_json_output',
     'access arguments' => array('access content'),
   );
 
+  // Set the parent menu item for the Chart settings sub-menu below.
   $items['admin/config/custom'] = array(
     'title' => 'Custom',
     'access arguments' => array('access content'),
   );
 
+  // Set the function to be executed ('_chart_admin_settings'),
+  // the access permission for the URL ('access content'),
+  // and convert the returned array/data of the function to a Drupal form
+  // ('drupal_get_form').
   $items['admin/config/custom/chart'] = array(
     'title' => 'Chart Settings',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('_chart_admin_settings'),
+    'page arguments' => array('_summercamp_chart_admin_settings'),
     'access arguments' => array('access content'),
   );
 
@@ -152,7 +178,7 @@ function summercamp_menu() {
 }
 
 
-function _chart_admin_settings($form, &$form_state) {
+function _summercamp_chart_admin_settings($form, &$form_state) {
   $form = array();
 
   $form['summercamp_chart_type'] = array(
@@ -177,23 +203,34 @@ function _chart_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('summercamp_chart_highlight_color', 'lightblue'),
   );
 
+  // Drupal's system_settings_form' auto-triggers the variable_get()
+  // and/or variable_set() for:
+  // 'summercamp_chart_type'
+  // 'summercamp_chart_label'
+  // 'summercamp_chart_highlight_color'
   $form = system_settings_form($form);
 
   return $form;
 }
 
 
-function _get_articles() {
+function _summercamp_get_articles() {
+  // Create a new EFQ object.
   $query = new EntityFieldQuery();
 
+  // Select all article nodes.
   $query
     ->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'article');
 
   $result = $query->execute();
 
+  // If there's at least one result.
   if (isset($result['node'])) {
+    // Retrieve the list of node ids.
     $nids = array_keys($result['node']);
+
+    // Load the articles simultaneously (minimizes db requests).
     $articles = entity_load('node', $nids);
   }
 
