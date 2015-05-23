@@ -1,7 +1,7 @@
 (function ($) {
   Drupal.behaviors.summercamp_chart_driver = {
     attach : function (context, settings) {
-      var articlesJsonUrl = 'articles/json';
+      var articlesJsonUrl = getBaseUrl() + 'articles/json';
       var alpha = 0;
       var beta = 0;
 
@@ -48,6 +48,39 @@
         renderChart(data, options);
       });
 
+      // Get the base url of the site to make the chart block correctly fetch
+      // the JSON data from 'articles/json' path, whatever path the block
+      // is currenlty on. Otherwise, the chart block will only work
+      // in the front page.
+      function getBaseUrl() {
+        // Get all scripts in the page.
+        var scripts = document.getElementsByTagName('script');
+
+        var i, len, src, baseUrl;
+
+        // Traverse the scripts.
+        for (i = 0, len = scripts.length; i < len; i++) {
+          src = scripts[i].src;
+
+          // Include the JS scripts with set src attribute,
+          // do not include scripts created on-the-fly.
+          // Check if CNN Travel Maps library is found.
+          if (src && src.indexOf('summercamp_chart_driver') != -1) {
+            // Get the file index. Sample URL:
+            // http://www.example.com/sites/all/modules/custom/summercamp/js/summercamp_chart_driver.js?notn34
+            var siteIndex = src.indexOf('sites');
+
+            // Build the base path to be used by the 'articles/json' router.
+            // Sample base path: http//www.example.com/
+            baseUrl = src.substring(0, siteIndex);
+
+            return baseUrl;
+          }
+        }
+
+        return '';
+      }
+
       function renderChart(data, options) {
         var canvasElement = document.getElementById('chart-canvas');
         var canvasRenderingContext = canvasElement.getContext('2d');
@@ -67,7 +100,3 @@
     }
   };
 })(jQuery);
-
-
-
-
