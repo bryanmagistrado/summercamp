@@ -30,16 +30,29 @@
           {
             value: alpha,
             color: 'yellowgreen',
-            highlight: 'lightblue',
-            label: 'Alpha'
           },
           {
             value: beta,
             color: 'gray',
-            highlight: 'lightblue',
-            label: 'Beta'
           },
         ];
+
+        // Check if we need to set the data labels and highlight color.
+        for (var i = 0; i < data.length; i++) {
+          if (settings.chart.label) {
+            if (i == 0) {
+              data[i].label = 'Alpha';
+            }
+
+            else {
+              data[i].label = 'Beta';
+            }
+          }
+
+          if (settings.chart.highlight_color) {
+            data[i].highlight = settings.chart.highlight_color;
+          }
+        }
 
         var options = {};
 

@@ -67,13 +67,15 @@ function summercamp_block_view($block_name = '') {
       // or as sourced from external sites.
       //
       // Prepare some info to be passed to Drupal.settings.
-      $chart_type = array(
+      $chart_options = array(
         'type' => variable_get('summercamp_chart_type', t('Pie')),
+        'label' => variable_get('summercamp_chart_label', '1'),
+        'highlight_color' => variable_get('summercamp_chart_highlight_color', 'lightblue'),
       );
 
       // Pass the chart type info as Drupal.settings.chart.type.
       $block['content']['#attached']['js'][] = array(
-        'data' => array('chart' => $chart_type),
+        'data' => array('chart' => $chart_options),
         'type' => 'setting',
       );
 
