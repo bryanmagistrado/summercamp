@@ -80,3 +80,19 @@ function summercamp_install() {
   variable_set('summercamp_tids_alpha', $tids['alpha']);
   variable_set('summercamp_tids_beta', $tids['beta']);
 }
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function summercamp_uninstall() {
+  // Get the site variables.
+  global $conf;
+
+  foreach (array_keys($conf) as $key) {
+    // Find variables that have the SummerCamp module prefix.
+    if (strpos($key, 'summercamp_') === 0) {
+      variable_del($key);
+    }
+  }
+}

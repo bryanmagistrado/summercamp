@@ -287,10 +287,14 @@ function _summercamp_get_articles() {
   // Create a new EFQ object.
   $query = new EntityFieldQuery();
 
+  $alpha_tid = variable_get('summercamp_tids_alpha');
+  $beta_tid = variable_get('summercamp_tids_beta');
+
   // Select all article nodes.
   $query
     ->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'article');
+    ->entityCondition('bundle', 'article')
+    ->fieldCondition('field_tags', 'tid', array($alpha_tid, $beta_tid), 'IN');
 
   $result = $query->execute();
 
@@ -301,10 +305,12 @@ function _summercamp_get_articles() {
 
     // Load the articles simultaneously (minimizes db requests).
     $articles = entity_load('node', $nids);
+
+    // Pass the data to JSON converter.
+    return array('data' => $articles);
   }
 
-  // Pass the data to JSON converter.
-  return array('data' => $articles);
+  return array('data' => []);
 }
 
 
