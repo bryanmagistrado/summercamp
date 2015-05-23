@@ -6,26 +6,31 @@
 function summercamp_block_info() {
   $blocks = array();
 
+  // Set this block as 'Featured Contents' in the block configuration page,
+  // enable it (status = 1), and assign it to the sidebar_second region
+  // (for Bartik theme).
+  // Use t() function for translatable strings in the code
+  // to conform to the best practice of Drupal supporting translations.
   $blocks['summercamp_featured_block'] = array(
-    'info' => 'Featured Contents',
+    'info' => t('Featured Contents'),
     'status' => 1,
     'region' => 'sidebar_second',
   );
 
   $blocks['summercamp_panoramio_function'] = array(
-    'info' => 'Panoramio Theme Function Block',
+    'info' => t('Panoramio Theme Function Block'),
     'status' => 1,
     'region' => 'sidebar_second',
   );
 
   $blocks['summercamp_panoramio_template'] = array(
-    'info' => 'Panoramio Template File Block',
+    'info' => t('Panoramio Template File Block'),
     'status' => 1,
     'region' => 'sidebar_second',
   );
 
   $blocks['summercamp_latest_gists'] = array(
-    'info' => 'Latest Gists Block',
+    'info' => t('Latest Gists Block'),
     'status' => 1,
     'region' => 'sidebar_second',
   );
@@ -41,12 +46,14 @@ function summercamp_block_view($block_name = '') {
   $block = array();
 
   switch ($block_name) {
+    // Set the title of this block ('subject') when rendered in the page and
+    // its block contents (['content']['#markup']).
     case 'summercamp_featured_block':
-      $block['subject'] = 'Featured Contents';
+      $block['subject'] = t('Custom JSON Data with Local & External Scripts');
 
       // Build the main markups for the block: Paragraph and Canvas tags.
       // Canvas is an HTML5 tag/element.
-      $current_content = variable_get('summercamp_featured_block_content', 'Hello World!');
+      $current_content = variable_get('summercamp_featured_block_content', t('Hello World!'));
       $canvas_content = '<canvas id="chart-canvas" width="168" height="168">';
 
       // Combine their markups.
@@ -61,7 +68,7 @@ function summercamp_block_view($block_name = '') {
       //
       // Prepare some info to be passed to Drupal.settings.
       $chart_type = array(
-        'type' => variable_get('summercamp_chart_type', 'Pie'),
+        'type' => variable_get('summercamp_chart_type', t('Pie')),
       );
 
       // Pass the chart type info as Drupal.settings.chart.type.
@@ -86,7 +93,7 @@ function summercamp_block_view($block_name = '') {
       break;
 
     case 'summercamp_panoramio_function':
-      $block['subject'] = 'Back-End JSON with Theme Function';
+      $block['subject'] = t('Back-End JSON with Theme Function');
 
       // Fetch JSON data from Panoramio API.
       $photo_attributes = _summercamp_fetch_panoramio_data();
@@ -97,7 +104,7 @@ function summercamp_block_view($block_name = '') {
       break;
 
     case 'summercamp_panoramio_template':
-      $block['subject'] = 'Back-End JSON with Template File';
+      $block['subject'] = t('Back-End JSON with Template File');
 
       // Fetch JSON data from Panoramio API.
       $photo_attributes = _summercamp_fetch_panoramio_data();
@@ -114,7 +121,7 @@ function summercamp_block_view($block_name = '') {
       break;
 
     case 'summercamp_latest_gists':
-      $block['subject'] = 'Front-End JSON with Render API';
+      $block['subject'] = t('Front-End JSON with Render API');
 
       // Build the block markup using the API and
       // the built-in 'links' theme function.
@@ -128,22 +135,22 @@ function summercamp_block_view($block_name = '') {
         '#theme' => 'links',
         '#links' => array(
           array(
-            'title' => 'Gist 1',
+            'title' => t('Gist 1'),
             'href' => '#',
           ),
           array(
-            'title' => 'Gist 2',
+            'title' => t('Gist 2'),
             'href' => '#',
           ),
           array(
-            'title' => 'Gist 3',
+            'title' => t('Gist 3'),
             'href' => '#',
           ),
         ),
         '#attributes' => array('class' => 'latest-gist'),
         // Let's insert a block sub-title.
         // '#prefix' inserts a markup before the 'links' markup.
-        '#prefix' => '<h3>Latest Gists</h3>',
+        '#prefix' => '<h3>' . t('Latest Gists') . '</h3>',
       );
 
       // Fetch an internal/local JS script used for adjusting the gists links.
@@ -168,8 +175,8 @@ function summercamp_block_configure($block_name = '') {
   if ($block_name == 'summercamp_featured_block') {
     $form['summercamp_featured_block_content'] = array(
       '#type' => 'textarea',
-      '#title' => 'Block Contents',
-      '#default_value' => variable_get('summercamp_featured_block_content', 'Hello Humans!'),
+      '#title' => t('Summercamp Block Contents'),
+      '#default_value' => variable_get('summercamp_featured_block_content', t('Hello World!')),
     );
   }
 
@@ -206,7 +213,7 @@ function summercamp_menu() {
 
   // Set the parent menu item for the Chart settings sub-menu below.
   $items['admin/config/custom'] = array(
-    'title' => 'Custom',
+    'title' => t('Custom'),
     'access arguments' => array('access content'),
   );
 
@@ -215,7 +222,7 @@ function summercamp_menu() {
   // and convert the returned array/data of the function to a Drupal form
   // ('drupal_get_form').
   $items['admin/config/custom/chart'] = array(
-    'title' => 'Chart Settings',
+    'title' => t('Chart Settings'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('_summercamp_chart_admin_settings'),
     'access arguments' => array('access content'),
@@ -230,24 +237,24 @@ function _summercamp_chart_admin_settings($form, &$form_state) {
 
   $form['summercamp_chart_type'] = array(
     '#type' => 'select',
-    '#title' => 'Choose the Chart Type',
-    '#default_value' => variable_get('summercamp_chart_type', 'Pie'),
+    '#title' => t('Choose the Chart Type'),
+    '#default_value' => variable_get('summercamp_chart_type', t('Pie')),
     '#options' => array(
-      'Pie' => 'Pie',
-      'Doughnut' => 'Doughnut',
+      'Pie' => t('Pie'),
+      'Doughnut' => t('Doughnut'),
     ),
   );
 
   $form['summercamp_chart_label'] = array(
     '#type' => 'checkbox',
-    '#title' => 'Include the Labels',
+    '#title' => t('Include the Labels'),
     '#default_value' => variable_get('summercamp_chart_label', 1),
   );
 
   $form['summercamp_chart_highlight_color'] = array(
     '#type' => 'textfield',
-    '#title' => 'Desired Highlight Color',
-    '#default_value' => variable_get('summercamp_chart_highlight_color', 'lightblue'),
+    '#title' => t('Desired Highlight Color'),
+    '#default_value' => variable_get('summercamp_chart_highlight_color', t('lightblue')),
   );
 
   // Drupal's system_settings_form' auto-triggers the variable_get()
@@ -281,6 +288,7 @@ function _summercamp_get_articles() {
     $articles = entity_load('node', $nids);
   }
 
+  // Pass the data to JSON converter.
   return array('data' => $articles);
 }
 

@@ -4,8 +4,7 @@
       var gistsJsonUrl = 'https://api.github.com/gists/public';
 
       $.getJSON(gistsJsonUrl, function(gistsJson) {
-        console.log('pasok', gistsJson);
-        // The limit of the Gists that will be displayed.
+        // The number of Gists that will be displayed.
         var latestGists = 3;
 
         for (var i = 0; i < latestGists; i++) {
@@ -16,14 +15,13 @@
           var targetLinkIndex = i + 1;
           var targetLink = $('#block-summercamp-summercamp-latest-gists .latest-gist li:nth-child(' + targetLinkIndex + ') a');
 
-          // Set the title and URL of the gist.
+          // Adjust the title of the gist.
           if (gistTitle != '') {
             $(targetLink).text(gistTitle);
           }
 
+           // Adjust the URL of the gist.
           $(targetLink).attr('href', gistUrl);
-
-          console.log('pasok', targetLink[0]);
         }
       });
     }
