@@ -1,21 +1,6 @@
 (function ($) {
   Drupal.behaviors.summercamp_chart_driver = {
     attach : function (context, settings) {
-      var data = [
-        {
-          value: 10,
-          color: 'yellowgreen',
-          highlight: 'lightblue',
-          label: 'Lorem'
-        },
-        {
-          value: 20,
-          color: 'gray',
-          highlight: 'lightblue',
-          label: 'Ipsum'
-        },
-      ];
-
       var articlesJsonUrl = 'articles/json';
       var alpha = 0;
       var beta = 0;
@@ -27,13 +12,15 @@
           var article = articles[nid];
 
           var tag = article.field_tags.und[0].tid;
+          var alphaTid = settings.tids.alpha;
+          var betaTid = settings.tids.beta;
 
           switch (tag) {
-            case '1':
+            case alphaTid:
               alpha++;
               break;
 
-            case '2':
+            case betaTid:
               beta++;
               break;
           }

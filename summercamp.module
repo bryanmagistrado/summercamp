@@ -77,6 +77,18 @@ function summercamp_block_view($block_name = '') {
         'type' => 'setting',
       );
 
+      // Prepare some info to be passed to Drupal.settings.
+      $tids = array(
+        'alpha' => variable_get('summercamp_tids_alpha', '12'),
+        'beta' => variable_get('summercamp_tids_beta', '13'),
+      );
+
+      // Pass the tags' tids as Drupal.settings.tids.(alpha|beta).
+      $block['content']['#attached']['js'][] = array(
+        'data' => array('tids' => $tids),
+        'type' => 'setting',
+      );
+
       // Fetch an external JS script (Chart JS).
       $block['content']['#attached']['js'][] = array(
         'data' => 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.js',
@@ -217,10 +229,13 @@ function summercamp_menu() {
     'access arguments' => array('access content'),
   );
 
+  // Create a dedicated page/menu for configuring the chart settings.
   // Set the function to be executed ('_chart_admin_settings'),
   // the access permission for the URL ('access content'),
   // and convert the returned array/data of the function to a Drupal form
   // ('drupal_get_form').
+  // Note that you could also utilize the hook_block_configure()
+  // for the chart block instead of creating a new admin page.
   $items['admin/config/custom/chart'] = array(
     'title' => t('Chart Settings'),
     'page callback' => 'drupal_get_form',

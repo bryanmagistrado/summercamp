@@ -1,0 +1,82 @@
+<?php
+
+/**
+ * @file
+ * SummerCamp .install.
+ */
+
+
+/**
+ * Implements hook_install().
+ */
+function summercamp_install() {
+  // Ultimately, we want to create 3 articles with prefined tags
+  // so that we could broadcast them as JSON objects via hook_menu
+  // and rendered as chart data in the block.
+  //
+  // The 'Tags' vocabulary id is usually equal to 1;
+  $tags_vid = taxonomy_vocabulary_machine_name_load('tags')->vid;
+  $tags = array('alpha', 'beta');
+  $tids = array();
+
+  // Create the 'alpha' and 'beta' tags.
+  foreach ($tags as $tag) {
+    $tags_new_term = new stdClass();
+    // alpha or beta
+    $tags_new_term->name = $tag;
+
+    $tags_new_term->vid = $tags_vid;
+    $tags_new_term->format = 'filtered_html';
+    taxonomy_term_save($tags_new_term);
+
+    $tid = $tags_new_term->tid;
+
+    $tids[$tag] = $tid;
+  }
+
+  // Define the properties of the 3 articles.
+  $articles = array();
+  $articles[] = array(
+    'title' => 'SummerCamp Article 1',
+    'tags' => 'alpha',
+    'body' => 'SummerCamp Article 1 Body Text'
+  );
+
+  $articles[] = array(
+    'title' => 'SummerCamp Article 2',
+    'tags' => 'beta',
+    'body' => 'SummerCamp Article 2 Body Text'
+  );
+
+  $articles[] = array(
+    'title' => 'SummerCamp Article 3',
+    'tags' => 'alpha',
+    'body' => 'SummerCamp Article 3 Body Text'
+  );
+
+  // Create the 3 articles. Set the title, body texts, and its tag.
+  global $user;
+  foreach ($articles as $article) {
+    $node = new stdClass();
+    $node->title = $article['title'];
+    $node->type = 'article';
+    node_object_prepare($node); // Set some default values
+
+    $node->language = LANGUAGE_NONE;
+    $node->uid = $user->uid;
+    $node->status = 1;
+    $node->promote = 1;
+    $node->comment = 0;
+
+    $node->field_tags[$node->language][]['tid'] = $tids[$article['tags']];
+
+    $node->body[$node->language][]['value']   = $article['body'];
+    $node->body[$node->language][]['format']  = filter_default_format();
+
+    node_save($node);
+  }
+
+  // Pass the generated tids of alpha and beta tags.
+  variable_set('summercamp_tids_alpha', $tids['alpha']);
+  variable_set('summercamp_tids_beta', $tids['beta']);
+}
