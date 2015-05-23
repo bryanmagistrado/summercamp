@@ -335,7 +335,7 @@ function theme_summercamp_panoramio_theme_function($photo_attributes) {
   $img_src = $photo_attributes['src'];
 
   $title_markup = '<p>' .  $title . '</p>';
-  $img_markup = '<img src="' . $img_src . '" />';
+  $img_markup = '<img src="' . $img_src . '" width="168px" />';
 
   // Return the combined markups of title and the photo itself.
   return $title_markup . $img_markup;
@@ -348,7 +348,7 @@ function theme_summercamp_panoramio_theme_function($photo_attributes) {
 function _summercamp_fetch_panoramio_data() {
   // Pull the Top 1 most popular photo in the vicinity of the Philippines.
   // API Details: http://www.panoramio.com/api/data/api.html
-  $target_image = 'http://www.panoramio.com/map/get_panoramas.php?set=full&from=0&to=1&minx=115&miny=0&maxx=130&maxy=20&size=thumbnail';
+  $target_image = 'http://www.panoramio.com/map/get_panoramas.php?set=full&from=0&to=1&minx=115&miny=0&maxx=130&maxy=20&size=small';
 
   $request = drupal_http_request($target_image);
 
