@@ -24,6 +24,12 @@ function summercamp_block_info() {
     'region' => 'sidebar_second',
   );
 
+  $blocks['summercamp_latest_gists'] = array(
+    'info' => 'Latest Gists Block',
+    'status' => 1,
+    'region' => 'sidebar_second',
+  );
+
   return $blocks;
 }
 
@@ -103,6 +109,47 @@ function summercamp_block_view($block_name = '') {
         '#theme' => 'summercamp_panoramio_template_file',
         '#title' => $photo_attributes['title'],
         '#src' => $photo_attributes['src'],
+      );
+
+      break;
+
+    case 'summercamp_latest_gists':
+      $block['subject'] = 'Front-End JSON with Render API';
+
+      // Build the block markup using the API and
+      // the built-in 'links' theme function.
+      // We need to append the render array as a new array element
+      // to simulate a new array key because a key is needed for render array.
+      // Note that the Links' 'title' and 'href' will be just overriden by the
+      // 'summercamp_panoramio_driver' JS file.
+      // But, we need to set temporary values because they are needed info
+      // by the 'links' theme function.
+      $block['content'][] = array(
+        '#theme' => 'links',
+        '#links' => array(
+          array(
+            'title' => 'Gist 1',
+            'href' => '#',
+          ),
+          array(
+            'title' => 'Gist 2',
+            'href' => '#',
+          ),
+          array(
+            'title' => 'Gist 3',
+            'href' => '#',
+          ),
+        ),
+        '#attributes' => array('class' => 'latest-gist'),
+        // Let's insert a block sub-title.
+        // '#prefix' inserts a markup before the 'links' markup.
+        '#prefix' => '<h3>Latest Gists</h3>',
+      );
+
+      // Fetch an internal/local JS script used for adjusting the gists links.
+      $block['content']['#attached']['js'][] = array(
+        'data' => drupal_get_path('module', 'summercamp') . '/js/summercamp_panoramio_driver.js',
+        'type' => 'file',
       );
 
       break;
